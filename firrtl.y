@@ -18,19 +18,23 @@ void yyerror(char* msg);
 }
 
 
-%token <id> id  /* [a-zA-Z_][a-zA-Z0-9_]* */
-%token <string_val> string_literal /* "foobar" */
-%token <int_val> int_literal  /* [0-9]+ */
-%token <output> dir  /* input|output */
-%token <kind> kind  /* UInt|SInt|Fixed|Clock|Analog */
-%token <primop> primop  /* add|sub|mul|div|... */
-// %type <ast_node> modules m_info info module ports port type basic aggregate bundle fields field vector stmts stmt exprs expr int_literals
+%token <id> ID  /* [a-zA-Z_][a-zA-Z0-9_]* */
+%token <string_val> STRING  /* "foobar" */
+%token <int_val> INT  /* [0-9]+ */
+%token <output> DIR  /* input|output */
+%token <kind> KIND  /* UInt|SInt|Fixed|Clock|Analog */
+%token <primop> PRIMOP  /* add|sub|mul|div|... */
+
+%token CIRCUIT  /* circuit */
+%token MODULE
+%token EXTMODULE
+// %type <ast_node> modules m_info info module ports port type basic aggregate bundle fields field vector stmts stmt exprs expr ints
 
 %%
 
 /* the prefix `m_` means `maybe` */
 
-circuit: "circuit" id ':' m_info '(' modules ')'   { printf("%s\n", $2); }
+circuit: CIRCUIT ID ':' m_info '(' modules ')'   { printf("%s\n", $2); }
        ;
 
 modules: %empty
@@ -41,72 +45,72 @@ m_info: %empty
       | info
       ;
 
-info: '@' '[' string_literal ']'
+info: '@' '[' STRING ']'
     ;
 
-module: "module" id ':' m_info '(' ports stmt ')'
-      | "extmodule" id ':' m_info '(' ports ')'
+module: MODULE ID ':' m_info '(' ports stmt ')'
+      | EXTMODULE ID ':' m_info '(' ports ')'
       ;
 
 ports: %empty
      | ports port
      ;
 
-port: dir id ':' type m_info
+port: DIR ID ':' type m_info
     ;
 
 type: basic
     | aggregate
     ;
 
-basic: kind
-     | kind '<' int_literal '>'
-     |  '<' int_literal '>' "<<" int_literal ">>"
+basic: KIND
+     | KIND '<' INT '>'
+     |  '<' INT '>' "<<" INT ">>"
      ;
 
-aggregate   : bundle
-            | vector
-            ;
+aggregate: bundle
+         | vector
+         ;
 
-bundle  : '{' fields '}'
-        ;
+bundle: '{' fields '}'
+      ;
 
-fields  : %empty
-        | fields field
-        ;
+fields: %empty
+      | fields field
+      ;
 
-field   : id ':' type
-        | "flip" id ':' type
-        ;
+field: ID ':' type
+     | "flip" ID ':' type
+     ;
 
-vector  : type '[' int_literal ']'
-        ;
+vector: type '[' INT ']'
+      ;
 
-stmts   : %empty
-        | stmts stmt
-        ;
+stmts: %empty
+     | stmts stmt
+     ;
 
-stmt    : "wire" id ':' type m_info
-        | "reg" id ':' type expr
-        | expr "<=" expr m_info
-        | '(' stmts ')'
-        ;
+stmt: "wire" ID ':' type m_info
+    | "reg" ID ':' type expr
+    | expr "<=" expr m_info
+    | '(' stmts ')'
+    ;
 
-expr    : id
-        | expr '.' id
-        | expr '[' int_literal ']'
-        | expr '[' expr ']'
-        | "mux" '(' expr ',' expr ',' expr ',' ')'
-        | primop '(' exprs ',' int_literals ')'
-        ;
+expr: ID
+    | expr '.' ID
+    | expr '[' INT ']'
+    | expr '[' expr ']'
+    | "mux" '(' expr ',' expr ',' expr ',' ')'
+    | PRIMOP '(' exprs ',' ints ')'
+    ;
 
-exprs   : %empty
-        | exprs expr
-        ;
+exprs: %empty
+     | exprs expr
+     ;
 
-int_literals    : %empty
-                | int_literals int_literal
-                ;
+ints: %empty
+    | ints INT
+    ;
 
 
 %%
