@@ -24,4 +24,5 @@ add|sub|mul|div         {yylval.primop = yytext; return PRIMOP;}
 [a-zA-Z_][a-zA-Z0-9_]*  {yylval.id = yytext; return ID;}
 [@:()<>\[\]{}.,]        {return yytext[0];}
 [ \t\n]                 {; /* do nothing */}
+
 %%

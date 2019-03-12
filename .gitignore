@@ -1,0 +1,5 @@
+lex.yy.c
+firrtl.tab.c
+firrtl.tab.h
+firrtl
+regress
