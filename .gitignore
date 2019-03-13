@@ -2,4 +2,6 @@ lex.yy.c
 firrtl.tab.c
 firrtl.tab.h
 firrtl
+firrtl.debug
+firrtl.output
 regress

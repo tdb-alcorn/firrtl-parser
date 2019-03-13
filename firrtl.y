@@ -1,9 +1,12 @@
+/* Firrtl parser */
+
 %{
 #include <stdlib.h>
 #include <stdio.h>
 
 extern int yylex();
 void yyerror(char* msg);
+extern char* yytext;
 %}
 
 %union {
@@ -13,6 +16,7 @@ void yyerror(char* msg);
     bool output;
     char* kind;
     char* primop;
+    char* circuit;
 
     // string ast_node;  // TODO
 }
@@ -30,11 +34,15 @@ void yyerror(char* msg);
 %token EXTMODULE
 // %type <ast_node> modules m_info info module ports port type basic aggregate bundle fields field vector stmts stmt exprs expr ints
 
+%type <circuit> circuit
+
+%locations
+
 %%
 
 /* the prefix `m_` means `maybe` */
 
-circuit: CIRCUIT ID ':' m_info '(' modules ')'   { printf("%s\n", $2); }
+circuit: CIRCUIT ID ':' m_info '(' modules ')' {printf("%s\n", $$);}
        ;
 
 modules: %empty
@@ -116,9 +124,10 @@ ints: %empty
 %%
 
 void yyerror(char* msg) {
-    extern int yylineno;
+    // extern int yylineno;
+    // extern int yycolumn;
     extern char *yytext;
-    fprintf(stderr, "%s at symbol \"%s\" on line %d\n", msg, yytext, yylineno);
+    fprintf(stderr, "%s at symbol \"%s\" on line %d column %d:%d\n", msg, yytext, yylloc.first_line, yylloc.first_column, yylloc.last_column);
     exit(1);
 }
 
@@ -128,6 +137,10 @@ int main(int argc, char **argv) {
         fprintf(stderr, "%s: File %s cannot be opened.\n", argv[0], argv[1]);
         exit(1);
     }
+
+#ifdef YYDEBUG
+    yydebug = 1;
+#endif
 
     yyparse();
     return 0;
