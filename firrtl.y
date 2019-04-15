@@ -5,9 +5,11 @@
 #include <stdio.h>
 
 extern int yylex();
-void yyerror(char* msg);
+void yyerror(const char* msg);
 extern char* yytext;
 %}
+
+%define parse.error verbose
 
 %union {
     char* id;
@@ -42,7 +44,7 @@ extern char* yytext;
 
 /* the prefix `m_` means `maybe` */
 
-circuit: CIRCUIT ID ':' m_info '(' modules ')' {printf("%s\n", $$);}
+circuit: CIRCUIT ID ':' m_info '(' modules ')' {printf("parsed circuit %s\n", $2);}
        ;
 
 modules: %empty
@@ -56,7 +58,7 @@ m_info: %empty
 info: '@' '[' STRING ']'
     ;
 
-module: MODULE ID ':' m_info '(' ports stmt ')'
+module: MODULE ID ':' m_info '(' ports stmts ')'
       | EXTMODULE ID ':' m_info '(' ports ')'
       ;
 
@@ -123,7 +125,7 @@ ints: %empty
 
 %%
 
-void yyerror(char* msg) {
+void yyerror(const char* msg) {
     // extern int yylineno;
     // extern int yycolumn;
     extern char *yytext;

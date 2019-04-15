@@ -1,5 +1,7 @@
 /* Firrtl lexer */
 
+/* Indentation parsing derived with modification from https://github.com/lucasb-eyer/flex-bison-indentation */
+
 %{
 #include <stdlib.h>
 #include <stack>
@@ -83,16 +85,6 @@ void set_yycolumn(int val) {
                             for(size_t i = 0 ; i < g_indent_levels.top() ; ++i) {
                                 unput(' ');
                             }
-                            // Now, insert a fake character indented just so
-                            // that we get a correct outdent the next time.
-                            unput('.');
-                            // Though we need to remember that it's a fake one
-                            // so we can ignore the symbol.
-                            g_is_fake_outdent_symbol = 1;
-                            for(size_t i = 0 ; i < g_indent_levels.top() ; ++i) {
-                                unput(' ');
-                            }
-                            unput('\n');
                         } else {
                             BEGIN(indent_caller);
                         }
@@ -109,6 +101,8 @@ void set_yycolumn(int val) {
                     }
                     set_yycolumn(yycolumn-1);
                     g_is_fake_outdent_symbol = 0;
+
+                    printf("\nindent state. g_indent_levels.top(): %lu, g_current_line_indent: %d\n", g_indent_levels.top(), g_current_line_indent);
 
                     // Indentation level has increased. It can only ever
                     // increase by one level at a time. Remember how many
