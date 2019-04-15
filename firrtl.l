@@ -74,9 +74,7 @@ void set_yycolumn(int val) {
 <indent><<EOF>> {
                     // When encountering the end of file, we want to emit an
                     // outdent for all indents currently left.
-                    printf("eof encountered\n");
                     if (g_indent_levels.top() != 0) {
-                        printf("unindenting. g_indent_levels.top(): %lu, g_current_line_indent: %d\n", g_indent_levels.top(), g_current_line_indent);
                         g_indent_levels.pop();
 
                         // See the same code below (<indent>.) for a rationale.
@@ -91,7 +89,6 @@ void set_yycolumn(int val) {
 
                         return ')';
                     } else {
-                        printf("terminating\n");
                         yyterminate();
                     }
                 }
@@ -101,8 +98,6 @@ void set_yycolumn(int val) {
                     }
                     set_yycolumn(yycolumn-1);
                     g_is_fake_outdent_symbol = 0;
-
-                    printf("\nindent state. g_indent_levels.top(): %lu, g_current_line_indent: %d\n", g_indent_levels.top(), g_current_line_indent);
 
                     // Indentation level has increased. It can only ever
                     // increase by one level at a time. Remember how many
@@ -153,12 +148,16 @@ void set_yycolumn(int val) {
 <normal>circuit                 {return CIRCUIT;}
 <normal>module                  {return MODULE;}
 <normal>extmodule               {return EXTMODULE;}
+<normal>wire                    {return WIRE;}
+<normal>reg                     {return REG;}
+<normal>mux                     {return MUX;}
 
 <normal>input                   {yylval.output = false; return DIR;}
 <normal>output                  {yylval.output = true; return DIR;}
 
 <normal>UInt|SInt|Fixed|Clock|Analog    {yylval.kind = strdup(yytext); return KIND;}
 <normal>add|sub|mul|div         {yylval.primop = yytext; return PRIMOP;}
+<normal><=                      {return ASSIGN;}
 
 <normal>\"[^"]*\"               {yylval.string_val = yytext; return STRING;}
 <normal>-?[0-9]+                {yylval.int_val = atoi(yytext); return INT;}

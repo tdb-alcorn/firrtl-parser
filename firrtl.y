@@ -34,7 +34,12 @@ extern char* yytext;
 %token CIRCUIT  /* circuit */
 %token MODULE
 %token EXTMODULE
+%token WIRE
+%token REG
+%token MUX
 // %type <ast_node> modules m_info info module ports port type basic aggregate bundle fields field vector stmts stmt exprs expr ints
+
+%token ASSIGN
 
 %type <circuit> circuit
 
@@ -100,9 +105,9 @@ stmts: %empty
      | stmts stmt
      ;
 
-stmt: "wire" ID ':' type m_info
-    | "reg" ID ':' type expr
-    | expr "<=" expr m_info
+stmt: WIRE ID ':' type m_info
+    | REG ID ':' type ',' expr
+    | expr ASSIGN expr m_info
     | '(' stmts ')'
     ;
 
@@ -110,7 +115,7 @@ expr: ID
     | expr '.' ID
     | expr '[' INT ']'
     | expr '[' expr ']'
-    | "mux" '(' expr ',' expr ',' expr ',' ')'
+    | MUX '(' expr ',' expr ',' expr ')'
     | PRIMOP '(' exprs ',' ints ')'
     ;
 
