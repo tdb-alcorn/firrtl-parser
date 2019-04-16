@@ -33,6 +33,7 @@ void set_yycolumn(int val) {
     yycolumn += yyleng; \
 }
 
+
 %}
 
 /* sub-parser for indentation-sensitive scoping */
@@ -151,12 +152,19 @@ void set_yycolumn(int val) {
 <normal>wire                    {return WIRE;}
 <normal>reg                     {return REG;}
 <normal>mux                     {return MUX;}
+<normal>node                    {return NODE;}
+<normal>inst                    {return INST;}
+<normal>of                      {return OF;}
+
+<normal>when                    {return WHEN;}
+<normal>else                    {return ELSE;}
 
 <normal>input                   {yylval.output = false; return DIR;}
 <normal>output                  {yylval.output = true; return DIR;}
+<normal>flip                    {return FLIP;}
 
 <normal>UInt|SInt|Fixed|Clock|Analog    {yylval.kind = strdup(yytext); return KIND;}
-<normal>add|sub|mul|div         {yylval.primop = yytext; return PRIMOP;}
+<normal>add|sub|mul|div|asFixedPoint|tail|gt|lt    {yylval.primop = yytext; return PRIMOP;}
 <normal><=                      {return ASSIGN;}
 
 <normal>\"[^"]*\"               {yylval.string_val = yytext; return STRING;}
@@ -165,7 +173,10 @@ void set_yycolumn(int val) {
 <normal>[ \t]                   { /* do nothing */ }
 
 <normal>[a-zA-Z_][a-zA-Z0-9_]*  {yylval.id = yytext; return ID;}
-<normal>[@:()<>\[\]{}.,]        {return yytext[0];}
+<normal>[:()<>\[\]{}.,=]        {return yytext[0];}
+<normal>\<\<                    {return LEFTLEFT;}
+<normal>\>\>                    {return RIGHTRIGHT;}
+<normal>@\[.*\]                 {yylval.info = yytext; return INFO;}
 
 (.|\n)                          {fprintf(stderr, "Unexpected token at line %d column %d: '%s'\n", yylineno, yycolumn, yytext); exit(1);}
 

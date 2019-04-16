@@ -19,6 +19,7 @@ extern char* yytext;
     char* kind;
     char* primop;
     char* circuit;
+    char* info;
 
     // string ast_node;  // TODO
 }
@@ -30,6 +31,7 @@ extern char* yytext;
 %token <output> DIR  /* input|output */
 %token <kind> KIND  /* UInt|SInt|Fixed|Clock|Analog */
 %token <primop> PRIMOP  /* add|sub|mul|div|... */
+%token <info> INFO /* @[foo.scala 1:23] */
 
 %token CIRCUIT  /* circuit */
 %token MODULE
@@ -37,9 +39,18 @@ extern char* yytext;
 %token WIRE
 %token REG
 %token MUX
+%token FLIP
+%token NODE
+%token INST
+%token OF
 // %type <ast_node> modules m_info info module ports port type basic aggregate bundle fields field vector stmts stmt exprs expr ints
 
+%token WHEN
+%token ELSE
+
 %token ASSIGN
+%token LEFTLEFT
+%token RIGHTRIGHT
 
 %type <circuit> circuit
 
@@ -57,11 +68,8 @@ modules: %empty
        ;
 
 m_info: %empty
-      | info
+      | INFO
       ;
-
-info: '@' '[' STRING ']'
-    ;
 
 module: MODULE ID ':' m_info '(' ports stmts ')'
       | EXTMODULE ID ':' m_info '(' ports ')'
@@ -80,7 +88,7 @@ type: basic
 
 basic: KIND
      | KIND '<' INT '>'
-     |  '<' INT '>' "<<" INT ">>"
+     | KIND '<' INT '>' LEFTLEFT INT RIGHTRIGHT
      ;
 
 aggregate: bundle
@@ -91,11 +99,12 @@ bundle: '{' fields '}'
       ;
 
 fields: %empty
-      | fields field
+      | fields ',' field
+      | field
       ;
 
 field: ID ':' type
-     | "flip" ID ':' type
+     | FLIP ID ':' type
      ;
 
 vector: type '[' INT ']'
@@ -107,24 +116,31 @@ stmts: %empty
 
 stmt: WIRE ID ':' type m_info
     | REG ID ':' type ',' expr
+    | NODE ID '=' expr m_info
+    | INST ID OF ID m_info
     | expr ASSIGN expr m_info
+    | when
     | '(' stmts ')'
     ;
 
-expr: ID
+when: WHEN expr ':' m_info stmt
+    | WHEN expr ':' m_info stmt ELSE ':' stmt
+    ;
+
+expr: basic '(' INT ')'
+    | basic '(' STRING ')'
+    | ID
     | expr '.' ID
     | expr '[' INT ']'
     | expr '[' expr ']'
     | MUX '(' expr ',' expr ',' expr ')'
-    | PRIMOP '(' exprs ',' ints ')'
+    | PRIMOP '(' primop_args ')'
     ;
 
-exprs: %empty
-     | exprs expr
-     ;
-
-ints: %empty
-    | ints INT
+primop_args: expr
+    | INT
+    | primop_args ',' expr
+    | primop_args ',' INT
     ;
 
 
@@ -134,7 +150,9 @@ void yyerror(const char* msg) {
     // extern int yylineno;
     // extern int yycolumn;
     extern char *yytext;
-    fprintf(stderr, "%s at symbol \"%s\" on line %d column %d:%d\n", msg, yytext, yylloc.first_line, yylloc.first_column, yylloc.last_column);
+    fprintf(stderr, "%s at symbol \"%s\" on line %d column %d:%d\n",
+        msg, yytext, yylloc.first_line, yylloc.first_column, yylloc.last_column);
+    extern int yylineno;
     exit(1);
 }
 
@@ -145,7 +163,8 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
-#ifdef YYDEBUG
+#if YYDEBUG
+    printf("%d\n", YYDEBUG);
     yydebug = 1;
 #endif
 
