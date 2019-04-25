@@ -2,11 +2,17 @@
 
 %{
 #include <stdlib.h>
-#include <stdio.h>
+#include <iostream>
+#include "ast.hh"
+
+using namespace FirrtlAst;
 
 extern int yylex();
 void yyerror(const char* msg);
 extern char* yytext;
+
+struct Node* root;
+
 %}
 
 %define parse.error verbose
@@ -18,10 +24,9 @@ extern char* yytext;
     bool output;
     char* kind;
     char* primop;
-    char* circuit;
     char* info;
 
-    // string ast_node;  // TODO
+    struct Node *ast;
 }
 
 
@@ -52,7 +57,7 @@ extern char* yytext;
 %token LEFTLEFT
 %token RIGHTRIGHT
 
-%type <circuit> circuit
+%type <ast> circuit modules module
 
 %locations
 
@@ -60,19 +65,30 @@ extern char* yytext;
 
 /* the prefix `m_` means `maybe` */
 
-circuit: CIRCUIT ID ':' m_info '(' modules ')' {printf("parsed circuit %s\n", $2);}
+circuit: CIRCUIT ID ':' m_info '(' modules ')' {
+    $$ = $modules;
+    root = $$;
+}
        ;
 
-modules: %empty
-       | modules module
+modules: %empty {
+            $$ = new Node(FIRRTL_CIRCUIT);
+    }
+       | modules module {
+           $1->children.push_back($2);
+       }
        ;
 
 m_info: %empty
       | INFO
       ;
 
-module: MODULE ID ':' m_info '(' ports stmts ')'
-      | EXTMODULE ID ':' m_info '(' ports ')'
+module: MODULE ID ':' m_info '(' ports stmts ')' {
+          $$ = new Node(FIRRTL_MODULE);
+      }
+      | EXTMODULE ID ':' m_info '(' ports ')' {
+          $$ = new Node(FIRRTL_MODULE);
+      }
       ;
 
 ports: %empty
@@ -146,6 +162,9 @@ primop_args: expr
 
 %%
 
+// #include "ast.hh"
+
+
 void yyerror(const char* msg) {
     // extern int yylineno;
     // extern int yycolumn;
@@ -169,5 +188,9 @@ int main(int argc, char **argv) {
 #endif
 
     yyparse();
+
+    depthFirstTraversal(root);
+    // cout << type2str(root->type) << endl;
+
     return 0;
 }

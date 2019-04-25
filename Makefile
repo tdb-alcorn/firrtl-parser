@@ -1,6 +1,6 @@
 
 firrtl:	firrtl.tab.c lex.yy.c
-	g++ firrtl.tab.c lex.yy.c -o firrtl
+	g++ ast.cc firrtl.tab.c lex.yy.c -o firrtl
 
 firrtl.tab.c: firrtl.y
 	bison -d firrtl.y
